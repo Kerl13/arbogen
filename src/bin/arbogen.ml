@@ -238,8 +238,7 @@ let () =
       weighted_grammar = wgrm
     } in
 
-    if global_options.verbosity > 0 then
-      Format.printf "==> Tree generated with %d nodes@." size;
+    if global_options.verbosity > 0 then Format.eprintf "size: %d@." size;
 
     let out_state =
       if global_options.fileName = "" then "state"
