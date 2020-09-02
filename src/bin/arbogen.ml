@@ -257,12 +257,11 @@ let () =
 
     if global_options.verbosity > 0 then Format.eprintf "size: %d@." size;
 
-    let out_state =
-      if global_options.fileName = "" then "state"
-      else global_options.fileName ^ ".state"
-    in
-    if global_options.verbosity >= 2 then
-      Format.printf "==> Saving state to file '%s'@." out_state;
+    if global_options.with_state then begin
+      let filename = global_options.state_file in
+      if global_options.verbosity >= 2 then
+        Format.printf "==> Saving state to file '%s'@." filename;
+      Boltzmann.GenState.to_file filename final_state;
+    end;
 
-    Boltzmann.GenState.to_file out_state final_state;
     print_tree tree
