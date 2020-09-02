@@ -99,8 +99,11 @@ let speclist =
    ("-randgen", Arg.String (fun s -> ParseUtil.set_option "randgen" (Vstring s)),
     "[ocaml|randu|randnull] : set the random number generator");
 
-   ("-oracle", Arg.Unit (fun () -> global_options.print_oracle <- true),
+   ("-print-oracle", Arg.String (fun s -> ParseUtil.set_option "print_oracle" (Vstring s)),
     ": output an oracle");
+
+   ("-use-oracle", Arg.String (fun s -> ParseUtil.set_option "use_oracle" (Vstring s)),
+    ": use oracle from file");
 
    ("-indent", Arg.Unit (fun () -> global_options.indent <- true),
     ": indent the output")
@@ -142,15 +145,25 @@ let parse_grammar () =
   g
 
 let make_oracle grammar =
-  let open Oracles.Naive in
-  let oracle_config = {
-      epsilon1 = global_options.epsilon1;
-      epsilon2 = global_options.epsilon2;
-      zmin = 0.;
-      zmax = 1.;
-      zstart = global_options.zstart;
-    } in
-  make oracle_config grammar
+  if global_options.use_oracle = "" then begin
+    let open Oracles.Naive in
+    let oracle_config = {
+        epsilon1 = global_options.epsilon1;
+        epsilon2 = global_options.epsilon2;
+        zmin = 0.;
+        zmax = 1.;
+        zstart = global_options.zstart;
+      } in
+    make oracle_config grammar
+  end else begin
+    let ic = open_in global_options.use_oracle in
+    let n = in_channel_length ic in
+    let s = Bytes.create n in
+    really_input ic s 0 n;
+    close_in ic;
+    let s = Bytes.unsafe_to_string s in
+    Oracles.Io.parse_unlabelled s
+  end
 
 let get_rng : string -> (module Randtools.Sig.S) = function
   | "ocaml" -> (module Randtools.OcamlRandom)
@@ -180,13 +193,17 @@ let () =
 
   if global_options.verbosity > 0 then Format.printf "%s@." banner;
 
-  if global_options.print_oracle then begin
+  if global_options.print_oracle <> "" then begin
+    let filename = global_options.print_oracle in
+    let fmt =
+      if filename = "-" then Format.std_formatter
+      else Format.formatter_of_out_channel (open_out filename)
+    in
     let grammar = parse_grammar () in
-    Format.printf "[GRAMMAR]: grammar parsed is :\n%a@." Grammar.pp grammar;
     let oracle = make_oracle grammar in
-    Format.printf "[ORACLE]: found singularity at z=%F@." oracle.z;
-    let wgrm = WeightedGrammar.of_grammar oracle grammar in
-    Format.printf "[ORACLE]: weighted grammar is :@\n%a@." WeightedGrammar.pp wgrm;
+    Format.fprintf fmt "%a" Oracles.Io.pp_unlabelled oracle;
+    if global_options.verbosity > 0 then
+      Format.printf "Oracle written to %s@." filename;
     exit 0
   end;
 

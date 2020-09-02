@@ -33,7 +33,8 @@ type options_record = {
   mutable state_file:string;
   mutable randgen:string;
   mutable indent:bool;
-  mutable print_oracle:bool
+  mutable print_oracle: string;
+  mutable use_oracle: string;
 }
 
 let global_options = {
@@ -60,7 +61,8 @@ let global_options = {
   state_file = "";
   randgen = "ocaml";
   indent=false;
-  print_oracle=false;
+  print_oracle = "";
+  use_oracle = "";
 }
 
 exception Option_Error of string

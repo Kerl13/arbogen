@@ -103,6 +103,14 @@ let set_option ?(preserve=false) name value =
       fail "rangen must belong to: %s" (String.concat "|" valid_names);
     global_options.randgen <- value
 
+  | "print_oracle" ->
+    let value = as_string name value in
+    global_options.print_oracle <- value
+
+  | "use_oracle" ->
+    let value = as_string name value in
+    global_options.use_oracle <- value
+
   | _ -> fail "Unknown parameter: %s" name
 
 let set_options ?(preserve=false) parameters =
